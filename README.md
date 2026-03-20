@@ -8,31 +8,31 @@ Ein automatisierter Pipeline, der eingehende Gmail-Newsletter in einen kuratiert
 
 ```
 personal_ai_newspaper/
-├── .env.example              # API-Keys, Gmail-Credentials
+├── .env.example              # Pfad zu Google OAuth2 Credentials
+├── .gitignore
 ├── requirements.txt          # Python-Dependencies
 │
 ├── config/
-│   ├── settings.yaml         # Pipeline-Konfiguration (Zeitfenster, Labels, Output-Länge)
-│   └── interests.yaml        # Persönliches Interessenprofil für Relevanz-Filterung
+│   ├── __init__.py           # Config Loader (settings.yaml + .env)
+│   └── settings.yaml         # Pipeline-Konfiguration (Zeitfenster, Labels)
 │
 ├── src/
 │   ├── main.py               # Einstiegspunkt – orchestriert die gesamte Pipeline
 │   ├── mail/
-│   │   ├── fetcher.py        # Gmail-Zugriff via Gemini CLI, Label-Filterung
+│   │   ├── fetcher.py        # Gmail-Zugriff via Gmail API (OAuth2), Label-Filterung
 │   │   └── labeler.py        # Verarbeitete Mails mit "processed"-Label markieren
 │   ├── processing/
-│   │   ├── filter.py         # Relevanz-Filterung anhand Interessenprofil
 │   │   ├── deduplicator.py   # Deduplication ähnlicher Inhalte
 │   │   └── clusterer.py      # Thematisches Clustering verwandter Artikel
 │   ├── ai/
 │   │   ├── summarizer.py     # Konsolidierte Zusammenfassung pro Cluster
 │   │   └── prompts.py        # Prompt-Templates für LLM-Aufrufe
 │   └── output/
-│       └── generator.py      # Markdown-Datei generieren (Obsidian/reMarkable-optimiert)
+│       └── generator.py      # Markdown-Datei generieren
 │
 ├── data/
 │   ├── raw/                  # Rohdaten der abgerufenen Mails (Debugging)
-│   └── output/               # Generierte .md-Digests
+│   └── newsletter/           # Generierte .md-Digests
 │
 └── tests/
     ├── test_mail.py
@@ -47,12 +47,12 @@ personal_ai_newspaper/
 Die Pipeline wird über `src/main.py` orchestriert und durchläuft folgende Schritte:
 
 ```
-Gmail → Fetch → Filter → Deduplicate → Cluster → Summarize → Markdown
+Gmail → Fetch → Deduplicate → Cluster → Summarize → Markdown
 ```
 
-### 1. Mail Ingestion (`src/mail/`)
-- Zugriff auf Gmail-Postfach via **Gemini CLI**
-- Filterung nach Label `tech_newsletter`
+### 1. Mail Ingestion (`src/mail/`) ✅
+- Zugriff auf Gmail-Postfach via **Gmail API** (OAuth2)
+- Filterung nach Label `Tech_Newsletter`
 - Verarbeitung der Mails der letzten 84 Stunden (konfigurierbar in `config/settings.yaml`)
 - Bereits verarbeitete Mails (Label `processed`) werden übersprungen
 
@@ -69,7 +69,7 @@ Gmail → Fetch → Filter → Deduplicate → Cluster → Summarize → Markdow
 - Thematisch strukturiert mit klaren Sections pro Cluster
 - Quellenangabe pro Cluster (welche Newsletter haben dieses Thema behandelt)
 
-### 5. State Management (`src/mail/labeler.py`)
+### 5. State Management (`src/mail/labeler.py`) ✅
 - Verarbeitete Mails werden in Gmail mit Label `processed` markiert
 - Keine doppelte Verarbeitung bei erneutem Run
 
@@ -79,9 +79,8 @@ Gmail → Fetch → Filter → Deduplicate → Cluster → Summarize → Markdow
 
 | Datei | Zweck |
 |---|---|
-| `.env` | API-Keys, Secrets (nicht im Repo) |
-| `config/settings.yaml` | Zeitfenster, Gmail-Labels, Output-Limits |
-| `config/interests.yaml` | Persönliches Interessenprofil für Relevanz-Filterung |
+| `.env` | Pfad zu `credentials.json` (nicht im Repo) |
+| `config/settings.yaml` | Zeitfenster, Gmail-Labels, Max. Ergebnisse |
 
 ---
 
@@ -93,32 +92,28 @@ git clone <repo-url>
 cd personal_ai_newspaper
 
 # 2. Virtual Environment erstellen
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 
 # 3. Dependencies installieren
 pip install -r requirements.txt
 
-# 4. Environment-Variablen konfigurieren
+# 4. Google OAuth2 Credentials einrichten
+#    → Google Cloud Console: Gmail API aktivieren
+#    → OAuth2 Desktop Credentials erstellen
+#    → JSON herunterladen und als credentials.json ins Projektroot legen
 cp .env.example .env
-# → .env mit eigenen Credentials befüllen
 
-# 5. Interessenprofil anpassen
-# → config/interests.yaml bearbeiten
+# 5. Erster Run – öffnet Browser für OAuth-Login
+python3 -m src.main
 ```
 
-## Ausführung
-
-```bash
-python -m src.main
-```
-
-Der generierte Digest wird in `data/output/` abgelegt.
+> **Hinweis:** Beim ersten Run öffnet sich ein Browserfenster für den Google OAuth-Login.
+> Der Token wird in `data/token.json` gecacht – danach ist kein erneuter Login nötig.
 
 ---
 
 ## Offene Entscheidungen
 
-- [ ] Wie wird das Interessenprofil definiert — statisch in `interests.yaml` oder dynamisch?
 - [ ] Wie lang darf der Output maximal sein?
 - [ ] Links zu Originalquellen im Output — ja oder nein?

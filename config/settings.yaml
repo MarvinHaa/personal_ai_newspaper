@@ -1,0 +1,17 @@
+# ── Mail Ingestion ──────────────────────────────────────────
+mail:
+  # Gmail-Label für eingehende Newsletter
+  source_label: "Tech_Newsletter"
+
+  # Label, das nach Verarbeitung gesetzt wird
+  processed_label: "processed"
+
+  # Zeitfenster in Stunden – nur Mails innerhalb dieses Fensters werden verarbeitet
+  time_window_hours: 84
+
+  # Maximale Anzahl Mails pro Run (0 = unbegrenzt)
+  max_results: 100
+
+# ── Output ─────────────────────────────────────────────────
+output:
+  directory: "data/newsletter/newsletter_markdown"
