@@ -52,25 +52,22 @@ Gmail → Fetch → Filter → Deduplicate → Cluster → Summarize → Markdow
 
 ### 1. Mail Ingestion (`src/mail/`)
 - Zugriff auf Gmail-Postfach via **Gemini CLI**
-- Filterung nach Label `newsletter`
-- Verarbeitung der Mails der letzten 24h (konfigurierbar in `config/settings.yaml`)
+- Filterung nach Label `tech_newsletter`
+- Verarbeitung der Mails der letzten 84 Stunden (konfigurierbar in `config/settings.yaml`)
 - Bereits verarbeitete Mails (Label `processed`) werden übersprungen
 
 ### 2. Processing (`src/processing/`)
-- **Relevanz-Filterung:** Nur Inhalte passend zum Interessenprofil (`config/interests.yaml`) werden weiterverarbeitet
 - **Deduplication:** Gleiche oder stark ähnliche Inhalte aus verschiedenen Quellen werden zusammengeführt
 - **Clustering:** Thematisch verwandte Artikel werden gruppiert
 
 ### 3. AI Summarization (`src/ai/`)
 - Pro Cluster wird eine konsolidierte Zusammenfassung erstellt
 - Fokus auf Insights, nicht auf reines Kürzen
-- Prompt-Templates sind zentral in `prompts.py` gepflegt
 
 ### 4. Output (`src/output/`)
-- Eine `.md`-Datei pro Run in `data/output/`
+- Eine `.md`-Datei pro Run in `data/newsletter/newsletter_markdown`
 - Thematisch strukturiert mit klaren Sections pro Cluster
 - Quellenangabe pro Cluster (welche Newsletter haben dieses Thema behandelt)
-- Optimiert für Lesbarkeit in **Obsidian** und auf dem **reMarkable**
 
 ### 5. State Management (`src/mail/labeler.py`)
 - Verarbeitete Mails werden in Gmail mit Label `processed` markiert
